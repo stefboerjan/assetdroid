@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "MiojIrmQxm06MKQjHTlwFgbVFgLPSdPFTvLsy7ASMdEoIWSWCtsJ5nVR6OreH/cjaG8Zp9GwkjOu5QCg24dCNw==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Stef\\source\\repos\\assetdroid\\assetdroid.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Stef\\.nuget\\packages\\plugin.ble\\2.1.3\\plugin.ble.2.1.3.nupkg.sha512"
+  ],
+  "logs": []
+}
