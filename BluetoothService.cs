@@ -5,8 +5,10 @@ using Android.OS;
 using Plugin.BLE;
 using Plugin.BLE.Abstractions.Contracts;
 using Plugin.BLE.Android;
+using System.Timers;
 using static Android.Bluetooth.BluetoothAdapter;
 using IAdapter = Plugin.BLE.Abstractions.Contracts.IAdapter;
+using Timer = System.Timers.Timer;
 
 namespace assetdroid
 {
@@ -17,6 +19,8 @@ namespace assetdroid
         private IAdapter adapter;
         private List<IDevice> Devices { get; set; }
         public IBinder Binder { get; private set; }
+
+        private Timer Timer { get; set; }
 
         //without Plugin.BLE
         /*public IBinder Binder { get; private set; }
@@ -35,13 +39,36 @@ namespace assetdroid
             SCAN_PERIOD = 2000;
             BluetoothDevices = new List<BluetoothDevice>();*/
 
-            //modern
+            //plugin.ble
             base.OnCreate();
             ble = CrossBluetoothLE.Current;
             adapter = CrossBluetoothLE.Current.Adapter;
             adapter.ScanTimeout = 2000;
             Devices = new List<IDevice>();
             adapter.DeviceDiscovered += (s, a) => Devices.Add(a.Device);
+            
+            Timer = new Timer();
+            Timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+            Timer.Interval = 5000;
+            Timer.Enabled = true;
+        }
+
+        private async void OnTimedEvent(object source, ElapsedEventArgs e)
+        {
+            try
+            {
+                Devices.Clear();
+                await adapter.StartScanningForDevicesAsync();
+                string list = "";
+                Devices.ForEach(d =>
+                {
+                    list = list + ", " + d.ToString();
+                });
+                Console.WriteLine(list);
+            } catch (Exception ex)
+            {
+
+            }
         }
 
         public override IBinder? OnBind(Intent? intent)
@@ -69,16 +96,14 @@ namespace assetdroid
             SCAN_PERIOD = 0;*/
 
             Binder = null;
+            Timer.Dispose();
             base.OnDestroy();
         }
 
         public async Task<List<IDevice>> GetBluetoothScanResults()
         {
             try
-            {
-                var state = ble.State;
-                Devices.Clear();
-                await adapter.StartScanningForDevicesAsync();
+            { 
                 return Devices;
             }
             catch (Exception ex)

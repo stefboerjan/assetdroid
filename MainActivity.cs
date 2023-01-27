@@ -1,4 +1,5 @@
 using Android;
+using Android.App.Job;
 using Android.Content;
 using Android.Content.PM;
 using Android.Views;
@@ -8,7 +9,7 @@ namespace assetdroid
     [Activity(Label = "@string/app_name", MainLauncher = true)]
     public class MainActivity : ListActivity
     {
-        BluetoothServiceConnection serviceConnection;
+        BluetoothStartedServiceConnection serviceConnection;
         List<string> Devices { get; set; } = new List<string>();
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -21,14 +22,57 @@ namespace assetdroid
         protected override void OnStart()
         {
             base.OnStart();
-            if (serviceConnection == null)
+            //Bound service
+            /*if (serviceConnection == null)
             {
                 serviceConnection = new BluetoothServiceConnection(this);
             }
             Intent serviceToStart = new Intent(this, typeof(BluetoothService));
-            BindService(serviceToStart, serviceConnection, Bind.AutoCreate);
+            BindService(serviceToStart, serviceConnection, Bind.AutoCreate);*/
 
+            /****************************************************************************************************************************************************************/
+            // Sample usage - creates a JobBuilder for a BluetoothJob and sets the Job ID to 1.
+            /*var jobBuilder = this.CreateJobBuilderUsingJobId<BluetoothJob>(1);
 
+            var jobInfo = jobBuilder.SetPeriodic(1000).Build();  // creates a JobInfo object.
+
+            var jobScheduler = (JobScheduler)GetSystemService(JobSchedulerService);
+            var scheduleResult = jobScheduler.Schedule(jobInfo);
+
+            if (JobScheduler.ResultSuccess == scheduleResult)
+            {
+                Toast.MakeText(Application, "success", ToastLength.Short).Show();
+            }
+            else
+            {
+                Toast.MakeText(Application, "Failed", ToastLength.Short).Show();
+            }*/
+
+            /****************************************************************************************************************************************************************/
+            //Started service
+            var intent = new Intent(this, typeof(BluetoothStartedService));
+
+            if (serviceConnection == null)
+            {
+                serviceConnection = new BluetoothStartedServiceConnection(this);
+            }
+
+            BindService(intent, serviceConnection, Bind.AutoCreate);
+
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
+            {
+                StartForegroundService(intent);
+            }
+            else
+            {
+                StartService(intent);
+            }
+        }
+
+        protected override void OnDestroy()
+        {
+            StopService(new Intent(this, typeof(BluetoothStartedService)));
+            base.OnDestroy();
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
@@ -49,7 +93,7 @@ namespace assetdroid
         public async Task UpdateUiForBoundService()
         {
             CheckPermissions();
-            var devices = await serviceConnection.Binder.GetBluetoothScanResults();
+            var devices = serviceConnection.Binder.GetBluetoothScanResults();
 
             foreach (var device in devices)
             {
@@ -73,7 +117,7 @@ namespace assetdroid
 
         public async void ScanButtonPressed()
         {
-            var devices = await serviceConnection.Binder.GetBluetoothScanResults();
+            var devices = serviceConnection.Binder.GetBluetoothScanResults();
             Devices.Clear();
             foreach (var device in devices)
             {
